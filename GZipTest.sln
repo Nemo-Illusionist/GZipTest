@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GZipTest", "GZipTest\GZipTest.csproj", "{0777428B-B588-4BF2-89BE-37BC91DD5598}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GZipLib", "GZipLib\GZipLib.csproj", "{0F2E050D-DE8A-43DD-97DF-69BC7D729302}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0777428B-B588-4BF2-89BE-37BC91DD5598}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0777428B-B588-4BF2-89BE-37BC91DD5598}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0777428B-B588-4BF2-89BE-37BC91DD5598}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0777428B-B588-4BF2-89BE-37BC91DD5598}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F2E050D-DE8A-43DD-97DF-69BC7D729302}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F2E050D-DE8A-43DD-97DF-69BC7D729302}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F2E050D-DE8A-43DD-97DF-69BC7D729302}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F2E050D-DE8A-43DD-97DF-69BC7D729302}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
