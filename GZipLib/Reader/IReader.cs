@@ -2,6 +2,7 @@ namespace GZipLib.Reader
 {
     public interface IReader
     {
-        byte[] Read(int position, int length);
+        long Length { get; }
+        byte[] Read(long position, int length);
     }
 }

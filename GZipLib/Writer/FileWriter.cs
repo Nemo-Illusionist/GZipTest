@@ -3,7 +3,7 @@ using System.IO;
 
 namespace GZipLib.Writer
 {
-    public sealed class FileWriter : IWriter, IDisposable
+    public sealed class FileWriter : IWriter
     {
         private  FileStream _stream;
 

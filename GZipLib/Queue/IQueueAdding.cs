@@ -1,6 +1,6 @@
-namespace GZipLib.Writer
+namespace GZipLib.Queue
 {
-    public interface IWritelQueue
+    public interface IQueueAdding
     {
         void Add(long position, byte[] bytes);
     }

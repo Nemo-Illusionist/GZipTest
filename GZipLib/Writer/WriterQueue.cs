@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using GZipLib.Queue;
 
 namespace GZipLib.Writer
 {
-    public class WritelQueue : IWritelQueue
+    public class WriterQueue : IWriterQueue
     {
+        public event EventHandler Event;
+
         private readonly Dictionary<long, byte[]> _parts;
         private readonly long _count;
         private readonly IWriter _writer;
@@ -14,7 +17,7 @@ namespace GZipLib.Writer
         private readonly AutoResetEvent _waitHandler;
         private Thread _thread;
 
-        private WritelQueue(long count, IWriter writer)
+        public WriterQueue(long count, IWriter writer)
         {
             if (count <= 0) throw new ArgumentOutOfRangeException(nameof(count));
             _count = count;
@@ -26,17 +29,15 @@ namespace GZipLib.Writer
             _waitHandler = new AutoResetEvent(false);
         }
 
-        public static WritelQueue CreateAndStart(long count, IWriter writer)
+        public void Start()
         {
-            var writelQueue = new WritelQueue(count, writer);
-
-            writelQueue._thread = new Thread(writelQueue.Start)
+            if (_thread != null) return;
+            
+            _thread = new Thread(Writer)
             {
                 IsBackground = true
             };
-            writelQueue._thread.Start();
-
-            return writelQueue;
+            _thread.Start();
         }
 
         public void Add(long position, byte[] bytes)
@@ -62,7 +63,7 @@ namespace GZipLib.Writer
             _thread.Join();
         }
 
-        private void Start()
+        private void Writer()
         {
             var token = _cancellationToken.Token;
             var position = 0;
@@ -93,6 +94,8 @@ namespace GZipLib.Writer
                 _writer.Write(bytes);
                 position++;
             }
+
+            Event?.Invoke(this, EventArgs.Empty);
         }
     }
 }

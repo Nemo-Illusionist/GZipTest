@@ -5,6 +5,8 @@ namespace GZipLib.Reader
 {
     public class FileReader : IReader
     {
+        public long Length { get; }
+
         private readonly string _filePath;
 
         public FileReader(string filePath)
@@ -13,9 +15,11 @@ namespace GZipLib.Reader
                 throw new ArgumentException("Value cannot be null or empty.", nameof(filePath));
 
             _filePath = filePath;
+            Length = new FileInfo(filePath).Length;
         }
 
-        public byte[] Read(int position, int length)
+
+        public byte[] Read(long position, int length)
         {
             if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
             if (length <= 0) throw new ArgumentOutOfRangeException(nameof(length));
