@@ -49,7 +49,7 @@ namespace GZipLib
         public void Compress()
         {
             var token = _cancellationToken.Token;
-            for (int i = 0; i < _settings.ThreadPoolCount; i++)
+            for (int i = 0; i < _settings.ThreadPoolSize; i++)
             {
                 var thread = new Thread(() =>
                 {
