@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+using GZipLib.Extensions;
 
 namespace GZipLib.Compressor
 {
@@ -39,21 +40,11 @@ namespace GZipLib.Compressor
                 {
                     using (var decompress = new GZipStream(input, CompressionMode.Decompress))
                     {
-                        Copy(decompress, output);
+                        decompress.Copy(output, _bufferSize);
                     }
                 }
 
                 return output.ToArray();
-            }
-        }
-
-        private void Copy(Stream input, Stream output)
-        {
-            var buffer = new byte[_bufferSize];
-            int bytesRead;
-            while ((bytesRead = input.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                output.Write(buffer, 0, bytesRead);
             }
         }
     }
