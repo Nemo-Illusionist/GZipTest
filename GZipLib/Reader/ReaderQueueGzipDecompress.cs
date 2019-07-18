@@ -19,8 +19,8 @@ namespace GZipLib.Reader
             _reader = reader ?? throw new ArgumentNullException(nameof(reader));
             _bufferSize = bufferSize;
             _index = 0;
-            _leftBytes = reader.Length;
             _header = ReadHeader();
+            _leftBytes = reader.Length - _header.Count;
         }
 
 

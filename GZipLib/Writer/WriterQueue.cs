@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Threading;
 using GZipLib.Queue;
 
@@ -26,18 +25,6 @@ namespace GZipLib.Writer
             _waitHandler = new AutoResetEvent(false);
         }
 
-        public void Start(INextCheck nextCheck)
-        {
-            if (_thread != null) return;
-            _nextCheck = nextCheck ?? throw new ArgumentNullException(nameof(nextCheck));
-
-            _thread = new Thread(Writer)
-            {
-                IsBackground = true
-            };
-            _thread.Start();
-        }
-
         public void Add(long position, byte[] bytes)
         {
             if (bytes == null) throw new ArgumentNullException(nameof(bytes));
@@ -50,6 +37,18 @@ namespace GZipLib.Writer
             }
         }
 
+        public void Start(INextCheck nextCheck)
+        {
+            if (_thread != null) return;
+            _nextCheck = nextCheck ?? throw new ArgumentNullException(nameof(nextCheck));
+
+            _thread = new Thread(Writer)
+            {
+                IsBackground = true
+            };
+            _thread.Start();
+        }
+
         public void Cancel()
         {
             _cancellationToken.Cancel();
@@ -59,6 +58,13 @@ namespace GZipLib.Writer
         public void Join()
         {
             _thread.Join();
+        }
+
+        public void Dispose()
+        {
+            _writer?.Dispose();
+            _cancellationToken?.Dispose();
+            _waitHandler?.Dispose();
         }
 
         private void Writer()
@@ -94,13 +100,6 @@ namespace GZipLib.Writer
             }
 
             EndWriterQueueEvent?.Invoke(this, EventArgs.Empty);
-        }
-
-        public void Dispose()
-        {
-            _writer?.Dispose();
-            _cancellationToken?.Dispose();
-            _waitHandler?.Dispose();
         }
     }
 }

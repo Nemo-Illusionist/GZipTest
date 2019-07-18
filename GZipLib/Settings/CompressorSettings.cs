@@ -2,6 +2,7 @@ using System;
 
 namespace GZipLib.Settings
 {
+    [Serializable]
     public class CompressorSettings
     {
         public int PageSize { get; }
@@ -19,8 +20,9 @@ namespace GZipLib.Settings
             ThreadPoolSize = threadPoolSize;
         }
 
-        public CompressorSettings() : this(4096 * 1024, 81920, 10)
+        public static CompressorSettings Default()
         {
+            return new CompressorSettings(4096 * 1024, 81920, 10);
         }
     }
 }

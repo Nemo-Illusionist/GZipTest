@@ -19,7 +19,7 @@ namespace GZipTest
             var output = "./../../original111.txt";
             var mode = CompressionMode.Decompress;
 
-            var compressorSettings = new CompressorSettings();
+            var compressorSettings = CompressorSettings.Default();
             var compressor = new GZipCompressor(compressorSettings.BufferSize);
             var readerQueueFactory = new FileReaderQueueFactory(input, compressorSettings);
             var writerQueue = new WriterQueue(new FileWriter(output));
