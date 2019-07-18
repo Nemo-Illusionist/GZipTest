@@ -13,13 +13,15 @@ namespace GZipTest
     {
         static void Main(string[] args)
         {
-//            args[0] = "./../../original1.txt";
-//            args[1] = "./../../original11.gz";      
-//            args[2] = "compress";
-
-//            args[0] = "./../../original11.gz";
-//            args[1] = "./../../original111.txt";
-//            args[2] = "decompress";
+//            args = new string[3];
+//            args[0] = "compress";
+//            args[1] = "C:/Users/illus/RiderProjects/original1.txt";
+//            args[2] = "C:/Users/illus/RiderProjects/original11.gz";
+//            
+//            args[0] = "decompress";
+//            args[1] = "C:/Users/illus/RiderProjects/original11.gz";
+//            args[2] = "C:/Users/illus/RiderProjects/original111.txt";
+            
 
             try
             {
@@ -51,6 +53,7 @@ namespace GZipTest
         private static string GetOutput(string[] args, CompressorSettings settings)
         {
             var output = args[settings.OutputIndex];
+            if (output.IndexOfAny(Path.GetInvalidPathChars()) != -1) throw new ArgumentException("Path is Invalid");
             if (File.Exists(output)) throw new ArgumentException("File already exists");
             return output;
         }
@@ -58,6 +61,7 @@ namespace GZipTest
         private static string GetInput(string[] args, CompressorSettings settings)
         {
             var input = args[settings.InputIndex];
+            if (input.IndexOfAny(Path.GetInvalidPathChars()) != -1) throw new ArgumentException("Path is Invalid");
             if (!File.Exists(input)) throw new ArgumentException("Fail is not exists");
             return input;
         }
