@@ -6,6 +6,7 @@ namespace GZipLib.Reader
     public class ReaderQueueGzipDecompress : IReaderQueue
     {
         private static readonly byte[] DefaultHeader = {0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00};
+        
         private readonly IReadOnlyList<byte> _header;
         private readonly IReader _reader;
         private readonly int _bufferSize;
@@ -29,7 +30,7 @@ namespace GZipLib.Reader
             int index;
             var gzipBlock = new List<byte>(_bufferSize);
             gzipBlock.AddRange(_header);
-            var gzipHeaderMatchsCount = 0;
+            var headerCount = 0;
 
             lock (_reader)
             {
@@ -41,17 +42,21 @@ namespace GZipLib.Reader
                     gzipBlock.Add(curByte);
                     _leftBytes--;
 
-                    if (curByte == _header[gzipHeaderMatchsCount])
+                    if (curByte == _header[headerCount])
                     {
-                        gzipHeaderMatchsCount++;
-                        if (gzipHeaderMatchsCount != _header.Count)
+                        headerCount++;
+                        if (headerCount != _header.Count)
+                        {
                             continue;
-
-                        gzipBlock.RemoveRange(gzipBlock.Count - _header.Count, _header.Count);
-                        break;
+                        }
+                        else
+                        {
+                            gzipBlock.RemoveRange(gzipBlock.Count - _header.Count, _header.Count);
+                            break;
+                        }
                     }
 
-                    gzipHeaderMatchsCount = 0;
+                    headerCount = 0;
                 }
 
                 index = _index++;
