@@ -13,12 +13,13 @@ namespace GZipTest
     {
         static void Main(string[] args)
         {
-//            var input = "./../../original1.txt";
-//            var output = "./../../original11.gz";      
-//            var mode = CompressionMode.Compress;
-//            var input = "./../../original11.gz";
-//            var output = "./../../original111.txt";
-//            var mode = CompressionMode.Decompress;
+//            args[0] = "./../../original1.txt";
+//            args[1] = "./../../original11.gz";      
+//            args[2] = "compress";
+
+//            args[0] = "./../../original11.gz";
+//            args[1] = "./../../original111.txt";
+//            args[2] = "decompress";
 
             try
             {

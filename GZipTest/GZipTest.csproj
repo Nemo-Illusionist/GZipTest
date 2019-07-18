@@ -9,4 +9,10 @@
       <ProjectReference Include="..\GZipLib\GZipLib.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="appsettings.xml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
