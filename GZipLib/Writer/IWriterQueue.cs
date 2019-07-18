@@ -7,7 +7,7 @@ namespace GZipLib.Writer
     {
         event EventHandler EndWriterQueueEvent;
 
-        void Start();
+        void Start(INextCheck nextCheck);
         void Cancel();
         void Join();
     }

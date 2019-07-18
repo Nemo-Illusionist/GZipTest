@@ -33,5 +33,22 @@ namespace GZipLib.Reader
 
             return bytes;
         }
+
+        public byte Read(long position)
+        {
+            if (position <= 0) throw new ArgumentOutOfRangeException(nameof(position));
+            byte readByte;
+            using (var stream = File.Open(_filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                stream.Seek(position, SeekOrigin.Begin);
+                readByte = (byte) stream.ReadByte();
+            }
+
+            return readByte;
+        }
+
+        public void Dispose()
+        {
+        }
     }
 }

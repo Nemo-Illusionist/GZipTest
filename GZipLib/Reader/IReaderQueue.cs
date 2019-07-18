@@ -1,12 +1,9 @@
+using System;
+using GZipLib.Queue;
+
 namespace GZipLib.Reader
 {
-    public interface IReaderQueue : IMore
+    public interface IReaderQueue : IDisposable, IQueueNext, INextCheck
     {
-        ReadingPart Next();
-    }
-
-    public interface IMore
-    {
-        bool More(long position);
     }
 }

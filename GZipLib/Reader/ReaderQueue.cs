@@ -17,7 +17,7 @@ namespace GZipLib.Reader
             _pageSize = pageSize;
             _position = 0;
             _index = 0;
-            _leftBytes = reader.Length;
+            _leftBytes = _reader.Length;
         }
 
         public ReadingPart Next()
@@ -39,9 +39,14 @@ namespace GZipLib.Reader
             return new ReadingPart(index, _reader.Read(position, length));
         }
 
-        public bool More(long position)
+        public bool IsNext(long position)
         {
             return position <= _reader.Length / _pageSize;
+        }
+
+        public void Dispose()
+        {
+            _reader?.Dispose();
         }
     }
 }

@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading;
-using GZipLib.Reader;
+using GZipLib.Queue;
 
 namespace GZipLib.Writer
 {
@@ -10,15 +11,14 @@ namespace GZipLib.Writer
         public event EventHandler EndWriterQueueEvent;
 
         private readonly Dictionary<long, byte[]> _parts;
-        private readonly IMore _more;
+        private INextCheck _nextCheck;
         private readonly IWriter _writer;
         private readonly CancellationTokenSource _cancellationToken;
         private readonly AutoResetEvent _waitHandler;
         private Thread _thread;
 
-        public WriterQueue(IMore more, IWriter writer)
+        public WriterQueue(IWriter writer)
         {
-            _more = more ?? throw new ArgumentNullException(nameof(more));
             _writer = writer ?? throw new ArgumentNullException(nameof(writer));
 
             _parts = new Dictionary<long, byte[]>();
@@ -26,9 +26,10 @@ namespace GZipLib.Writer
             _waitHandler = new AutoResetEvent(false);
         }
 
-        public void Start()
+        public void Start(INextCheck nextCheck)
         {
             if (_thread != null) return;
+            _nextCheck = nextCheck ?? throw new ArgumentNullException(nameof(nextCheck));
 
             _thread = new Thread(Writer)
             {
@@ -66,7 +67,7 @@ namespace GZipLib.Writer
             var position = 0;
             var isWait = true;
 
-            while (_more.More(position))
+            while (_nextCheck.IsNext(position))
             {
                 if (isWait)
                 {
