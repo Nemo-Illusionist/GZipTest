@@ -11,7 +11,7 @@ namespace GZipLib.Reader
         public FileReaderWithOpenStream(string filePath)
         {
             if (string.IsNullOrEmpty(filePath))
-                throw new ArgumentException("Value cannot be null or empty.", nameof(filePath));
+                throw new ArgumentException("Path cannot be null or empty.", nameof(filePath));
 
             Length = new FileInfo(filePath).Length;
             _stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);

@@ -6,7 +6,7 @@ namespace GZipLib.Reader
     public class ReaderQueueGzipDecompress : IReaderQueue
     {
         private static readonly byte[] DefaultHeader = {0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00};
-        
+
         private readonly IReadOnlyList<byte> _header;
         private readonly IReader _reader;
         private readonly int _bufferSize;
@@ -19,9 +19,9 @@ namespace GZipLib.Reader
             if (bufferSize <= 0) throw new ArgumentOutOfRangeException(nameof(bufferSize));
             _reader = reader ?? throw new ArgumentNullException(nameof(reader));
             _bufferSize = bufferSize;
-            _index = 0;
             _header = ReadHeader();
             _leftBytes = reader.Length - _header.Count;
+            _index = 0;
         }
 
 
@@ -72,6 +72,7 @@ namespace GZipLib.Reader
 
         public bool IsNext(long position)
         {
+            if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
             return !(_leftBytes <= 0 && _index == position);
         }
 

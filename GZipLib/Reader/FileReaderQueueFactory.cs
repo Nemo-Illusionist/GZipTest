@@ -12,7 +12,7 @@ namespace GZipLib.Reader
         public FileReaderQueueFactory(string filePath, CompressorSettings settings)
         {
             if (string.IsNullOrEmpty(filePath))
-                throw new ArgumentException("Value cannot be null or empty.", nameof(filePath));
+                throw new ArgumentException("Path cannot be null or empty.", nameof(filePath));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _filePath = filePath;
         }
@@ -26,7 +26,7 @@ namespace GZipLib.Reader
                 case CompressionMode.Decompress:
                     return new ReaderQueueGzipDecompress(new FileReaderWithOpenStream(_filePath), _settings.PageSize);
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
+                    throw new ArgumentOutOfRangeException(nameof(mode), mode, "This mod is not supported.");
             }
         }
     }

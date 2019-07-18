@@ -44,7 +44,7 @@ namespace GZipLib
                     method = _compressor.Decompress;
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException(nameof(mode), mode, "This mod is not supported.");
             }
 
             var token = _cancellationToken.Token;

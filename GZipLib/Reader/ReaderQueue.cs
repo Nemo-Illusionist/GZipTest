@@ -41,6 +41,7 @@ namespace GZipLib.Reader
 
         public bool IsNext(long position)
         {
+            if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
             return position <= _reader.Length / _pageSize;
         }
 
