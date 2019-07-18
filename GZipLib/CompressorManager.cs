@@ -7,24 +7,23 @@ using GZipLib.Writer;
 
 namespace GZipLib
 {
-    public class CompressorManager
+    public class CompressorManager : IDisposable
     {
         private readonly IWriterQueue _writerQueue;
         private readonly IReaderQueue _readerQueue;
-        private readonly IReader _reader;
         private readonly ICompressor _compressor;
-        private readonly CompressorSettings _settings;
         private readonly CancellationTokenSource _cancellationToken;
 
+        private readonly int _threadPoolSize;
 
-        public CompressorManager(IWriterQueue writerQueue, IReaderQueue readerQueue, IReader reader,
-            ICompressor compressor, CompressorSettings settings) : this()
+        public CompressorManager(IWriterQueue writerQueue, IReaderQueue readerQueue,
+            ICompressor compressor, int threadPoolSize) : this()
         {
+            if (threadPoolSize <= 0) throw new ArgumentOutOfRangeException(nameof(threadPoolSize));
             _writerQueue = writerQueue ?? throw new ArgumentNullException(nameof(writerQueue));
             _readerQueue = readerQueue ?? throw new ArgumentNullException(nameof(readerQueue));
-            _reader = reader ?? throw new ArgumentNullException(nameof(reader));
             _compressor = compressor ?? throw new ArgumentNullException(nameof(compressor));
-            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _threadPoolSize = threadPoolSize;
         }
 
         public CompressorManager(string input, string output) : this()
@@ -33,12 +32,13 @@ namespace GZipLib
                 throw new ArgumentException("Value cannot be null or empty.", nameof(input));
             if (string.IsNullOrEmpty(output))
                 throw new ArgumentException("Value cannot be null or empty.", nameof(output));
-            
-            _settings = new CompressorSettings();
-            _reader = new FileReader(input);
-            _writerQueue = new WriterQueue(_reader.Length / _settings.PageSize, new FileWriter(output));
-            _readerQueue = new ReaderQueue(_reader, _settings.PageSize);
-            _compressor = new GZipCompressor(_settings.BufferSize);
+
+            var settings = new CompressorSettings();
+            var reader = new FileReader(input);
+            _readerQueue = new ReaderQueue(reader, settings.PageSize);
+            _writerQueue = new WriterQueue(_readerQueue, new FileWriter(output));
+            _compressor = new GZipCompressor(settings.BufferSize);
+            _threadPoolSize = settings.ThreadPoolSize;
         }
 
         private CompressorManager()
@@ -49,25 +49,25 @@ namespace GZipLib
         public void Compress()
         {
             var token = _cancellationToken.Token;
-            for (int i = 0; i < _settings.ThreadPoolSize; i++)
+
+            _writerQueue.Start();
+            for (int i = 0; i < _threadPoolSize; i++)
             {
                 var thread = new Thread(() =>
                 {
-                    var next = _readerQueue.Next();
-                    while (next.HasValue)
+                    var part = _readerQueue.Next();
+                    while (part != null)
                     {
                         token.ThrowIfCancellationRequested();
 
-                        var bytes = _reader.Read(next.Value.position, next.Value.length);
+                        var bytes = part.Data;
                         bytes = _compressor.Compress(bytes);
-                        _writerQueue.Add(next.Value.index, bytes);
-                        next = _readerQueue.Next();
+                        _writerQueue.Add(part.Index, bytes);
+                        part = _readerQueue.Next();
                     }
                 });
                 thread.Start();
             }
-
-            _writerQueue.Start();
         }
 
         public void Join()
@@ -79,6 +79,12 @@ namespace GZipLib
         {
             _writerQueue.Cancel();
             _cancellationToken.Cancel();
+        }
+
+        public void Dispose()
+        {
+            _cancellationToken?.Dispose();
+            _writerQueue?.Dispose();
         }
     }
 }

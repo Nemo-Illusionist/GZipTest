@@ -15,7 +15,7 @@ namespace GZipLib.Reader
                 throw new ArgumentException("Value cannot be null or empty.", nameof(filePath));
 
             _filePath = filePath;
-            Length = new FileInfo(filePath).Length;
+            Length = new FileInfo(_filePath).Length;
         }
 
 

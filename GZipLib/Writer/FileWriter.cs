@@ -5,7 +5,7 @@ namespace GZipLib.Writer
 {
     public sealed class FileWriter : IWriter
     {
-        private  FileStream _stream;
+        private readonly FileStream _stream;
 
         public FileWriter(string filePath)
         {
@@ -26,7 +26,6 @@ namespace GZipLib.Writer
         public void Dispose()
         {
             _stream?.Dispose();
-            _stream = null;
         }
     }
 }

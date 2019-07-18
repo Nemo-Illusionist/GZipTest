@@ -20,17 +20,28 @@ namespace GZipLib.Reader
             _leftBytes = reader.Length;
         }
 
-        public (long position, int length, int index)? Next()
+        public ReadingPart Next()
         {
+            long position;
+            int length;
+            int index;
             lock (_reader)
             {
                 if (_leftBytes <= 0) return null;
 
                 _position = _reader.Length - _leftBytes;
-                var length = _leftBytes < _pageSize ? (int) _leftBytes : _pageSize;
+                position = _position;
+                length = _leftBytes < _pageSize ? (int) _leftBytes : _pageSize;
                 _leftBytes -= length;
-                return (_position, length, _index++);
+                index = _index++;
             }
+
+            return new ReadingPart(index, _reader.Read(position, length));
+        }
+
+        public bool More(long position)
+        {
+            return position <= _reader.Length / _pageSize;
         }
     }
 }

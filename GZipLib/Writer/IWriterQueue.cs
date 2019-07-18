@@ -3,9 +3,9 @@ using GZipLib.Queue;
 
 namespace GZipLib.Writer
 {
-    public interface IWriterQueue : IQueueAdding
+    public interface IWriterQueue : IQueueAdding, IDisposable
     {
-        event EventHandler Event;
+        event EventHandler EndWriterQueueEvent;
 
         void Start();
         void Cancel();

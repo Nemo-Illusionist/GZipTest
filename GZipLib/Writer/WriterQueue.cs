@@ -1,27 +1,24 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
-using GZipLib.Queue;
+using GZipLib.Reader;
 
 namespace GZipLib.Writer
 {
     public class WriterQueue : IWriterQueue
     {
-        public event EventHandler Event;
+        public event EventHandler EndWriterQueueEvent;
 
         private readonly Dictionary<long, byte[]> _parts;
-        private readonly long _count;
+        private readonly IMore _more;
         private readonly IWriter _writer;
         private readonly CancellationTokenSource _cancellationToken;
         private readonly AutoResetEvent _waitHandler;
         private Thread _thread;
 
-        public WriterQueue(long count, IWriter writer)
+        public WriterQueue(IMore more, IWriter writer)
         {
-            if (count <= 0) throw new ArgumentOutOfRangeException(nameof(count));
-            _count = count;
-
+            _more = more ?? throw new ArgumentNullException(nameof(more));
             _writer = writer ?? throw new ArgumentNullException(nameof(writer));
 
             _parts = new Dictionary<long, byte[]>();
@@ -32,7 +29,7 @@ namespace GZipLib.Writer
         public void Start()
         {
             if (_thread != null) return;
-            
+
             _thread = new Thread(Writer)
             {
                 IsBackground = true
@@ -69,7 +66,7 @@ namespace GZipLib.Writer
             var position = 0;
             var isWait = true;
 
-            while (position <= _count)
+            while (_more.More(position))
             {
                 if (isWait)
                 {
@@ -95,7 +92,14 @@ namespace GZipLib.Writer
                 position++;
             }
 
-            Event?.Invoke(this, EventArgs.Empty);
+            EndWriterQueueEvent?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void Dispose()
+        {
+            _writer?.Dispose();
+            _cancellationToken?.Dispose();
+            _waitHandler?.Dispose();
         }
     }
 }
