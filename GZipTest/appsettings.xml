@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<CompressorSettings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <PageSize>4194304</PageSize>
+    <BufferSize>81920</BufferSize>
+    <ThreadPoolSize>20</ThreadPoolSize>
+    <ModIndex>0</ModIndex>
+    <InputIndex>1</InputIndex>
+    <OutputIndex>2</OutputIndex>
+</CompressorSettings>
