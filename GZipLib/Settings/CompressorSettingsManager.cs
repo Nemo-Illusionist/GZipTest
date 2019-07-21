@@ -1,4 +1,5 @@
 using System.IO;
+using System.Net;
 using System.Xml.Serialization;
 
 namespace GZipLib.Settings
@@ -20,7 +21,7 @@ namespace GZipLib.Settings
             {
                 settings = new CompressorSettings
                 {
-                    PageSize = 4096 * 1024, BufferSize = 81920, ThreadPoolSize = 10,
+                    PageSize = 4096 * 1024, BufferSize = 81920, ThreadPoolSize = 10, ReaderQueueWithCache = false,
                     ModIndex = 0, InputIndex = 1, OutputIndex = 2,
                 };
             }

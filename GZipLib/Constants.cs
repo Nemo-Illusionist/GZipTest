@@ -1,0 +1,7 @@
+namespace GZipLib
+{
+    public static class Constants
+    {
+        internal static byte[] DefaultHeader = {0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00};
+    }
+}
