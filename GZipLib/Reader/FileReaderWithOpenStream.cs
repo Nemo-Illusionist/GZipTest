@@ -22,24 +22,35 @@ namespace GZipLib.Reader
             if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
             if (length <= 0) throw new ArgumentOutOfRangeException(nameof(length));
 
-            var bytes = new byte[length];
-            _stream.Seek(position, SeekOrigin.Begin);
-            _stream.Read(bytes, 0, length);
+            lock (_stream)
+            {
+                var bytes = new byte[length];
+                Seek(position);
+                _stream.Read(bytes, 0, length);
 
-            return bytes;
+                return bytes;
+            }
         }
 
         public byte Read(long position)
         {
             if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
 
-            _stream.Seek(position, SeekOrigin.Begin);
-            return (byte) _stream.ReadByte();
+            lock (_stream)
+            {
+                Seek(position);
+                return (byte) _stream.ReadByte();
+            }
         }
 
         public void Dispose()
         {
             _stream?.Dispose();
+        }
+
+        private void Seek(long position)
+        {
+            if (_stream.Position != position) _stream.Seek(position, SeekOrigin.Begin);
         }
     }
 }
