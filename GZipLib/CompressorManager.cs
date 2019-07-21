@@ -34,18 +34,7 @@ namespace GZipLib
 
         public void Run(CompressionMode mode)
         {
-            Func<byte[], byte[]> method;
-            switch (mode)
-            {
-                case CompressionMode.Compress:
-                    method = _compressor.Compress;
-                    break;
-                case CompressionMode.Decompress:
-                    method = _compressor.Decompress;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(mode), mode, "This mod is not supported.");
-            }
+            var method = CompressorMode(mode);
 
             var token = _cancellationToken.Token;
 
@@ -86,6 +75,24 @@ namespace GZipLib
             _cancellationToken?.Dispose();
             _readerQueue?.Dispose();
             _writerQueue?.Dispose();
+        }
+
+        private Func<byte[], byte[]> CompressorMode(CompressionMode mode)
+        {
+            Func<byte[], byte[]> method;
+            switch (mode)
+            {
+                case CompressionMode.Compress:
+                    method = _compressor.Compress;
+                    break;
+                case CompressionMode.Decompress:
+                    method = _compressor.Decompress;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(mode), mode, "This mod is not supported.");
+            }
+
+            return method;
         }
     }
 }
