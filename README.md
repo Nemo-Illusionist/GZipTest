@@ -1,3 +1,5 @@
+[Ссылка на скачивание](https://www.dropbox.com/s/p80qos93zeqnpxn/GZipTest.zip?dl=0)
+
 
 Разработать консольное приложение на C# для поблочного сжатия и распаковки файлов с помощью System.IO.Compression.GzipStream.
 
