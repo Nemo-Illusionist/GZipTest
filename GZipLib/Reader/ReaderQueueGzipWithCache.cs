@@ -5,7 +5,7 @@ namespace GZipLib.Reader
 {
     public class ReaderQueueGzipWithCache : BaseReaderQueueGzip, IReaderQueue
     {
-        private readonly Dictionary<int, (long, int)> _dictionary;
+        private readonly Dictionary<int, (long, int)> _cache;
         private readonly IReader _reader;
         private int _index;
 
@@ -13,8 +13,9 @@ namespace GZipLib.Reader
         {
             if (bufferSize <= 0) throw new ArgumentOutOfRangeException(nameof(bufferSize));
             _reader = reader ?? throw new ArgumentNullException(nameof(reader));
-            _dictionary = new Dictionary<int, (long, int)>();
-            Start(blockReader.Length, bufferSize);
+            _cache = new Dictionary<int, (long, int)>();
+            CountCache(blockReader.Length, bufferSize);
+            Reader.Dispose();
             _index = 0;
         }
 
@@ -25,9 +26,9 @@ namespace GZipLib.Reader
             lock (_reader)
             {
                 index = _index;
-                if (!_dictionary.TryGetValue(index, out positionAndLength)) return null;
-                positionAndLength = _dictionary[index];
-                _dictionary.Remove(index);
+                if (!_cache.TryGetValue(index, out positionAndLength)) return null;
+                positionAndLength = _cache[index];
+                _cache.Remove(index);
                 _index++;
             }
 
@@ -37,16 +38,15 @@ namespace GZipLib.Reader
         public bool IsNext(long position)
         {
             if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
-            return !(_dictionary.Count == 0 && _index == position);
+            return !(_cache.Count == 0 && _index == position);
         }
 
         public void Dispose()
         {
-            Reader?.Dispose();
             _reader?.Dispose();
         }
 
-        private void Start(long fileLength, int bufferSize)
+        private void CountCache(long fileLength, int bufferSize)
         {
             byte[] header = ReadHeader();
             var leftBytes = fileLength - header.Length;
@@ -65,7 +65,7 @@ namespace GZipLib.Reader
                     position += header.Length;
                 }
 
-                _dictionary.Add(chunkIndex, (position, length));
+                _cache.Add(chunkIndex, (position, length));
 
                 chunkIndex++;
             }
