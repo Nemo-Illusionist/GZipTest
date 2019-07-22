@@ -13,6 +13,7 @@ namespace GZipTest
     {
         static void Main(string[] args)
         {
+            var exitCode = 1;
             try
             {
                 var settings = CompressorSettingsManager.GetOrDefault("appsettings.xml");
@@ -41,13 +42,15 @@ namespace GZipTest
                     manager.Join();
                 }
 
-                Environment.Exit(0);
+                exitCode = 0;
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-                Environment.Exit(1);
             }
+
+            Console.ReadKey();
+            Environment.Exit(exitCode);
         }
 
         private static string GetOutput(string[] args, CompressorSettings settings)
