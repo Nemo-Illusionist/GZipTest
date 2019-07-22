@@ -49,7 +49,6 @@ namespace GZipTest
                 Console.WriteLine(e.Message);
             }
 
-            Console.ReadKey();
             Environment.Exit(exitCode);
         }
 
