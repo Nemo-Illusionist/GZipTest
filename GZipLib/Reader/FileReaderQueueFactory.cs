@@ -22,12 +22,9 @@ namespace GZipLib.Reader
             switch (mode)
             {
                 case CompressionMode.Compress:
-                    return new ReaderQueue(new FileReader(_filePath), _settings.PageSize);
-                case CompressionMode.Decompress when !_settings.ReaderQueueWithCache:
-                    return new ReaderQueueGzip(new FileReaderWithOpenStream(_filePath), _settings.PageSize);
-                case CompressionMode.Decompress when _settings.ReaderQueueWithCache:
-                    return new ReaderQueueGzipWithCache(new FileReader(_filePath),
-                        new FileReaderWithOpenStream(_filePath), _settings.PageSize);
+                    return new ReaderQueue(new FileReader(_filePath), _settings);
+                case CompressionMode.Decompress:
+                    return new ReaderQueueGzip(new FileReader(_filePath), _settings);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mode), mode, "This mod is not supported.");
             }

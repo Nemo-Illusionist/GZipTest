@@ -39,6 +39,7 @@ namespace GZipLib
             var token = _cancellationToken.Token;
 
             _readerQueue = _readerQueueFactory.Create(mode);
+            _readerQueue.Start();
             _writerQueue.Start(_readerQueue);
             for (int i = 0; i < _settings.ThreadPoolSize; i++)
             {
@@ -61,13 +62,15 @@ namespace GZipLib
 
         public void Join()
         {
+            _readerQueue.Join();
             _writerQueue.Join();
         }
 
         public void Cancel()
         {
-            _writerQueue.Cancel();
             _cancellationToken.Cancel();
+            _writerQueue.Cancel();
+            _readerQueue.Cancel();
         }
 
         public void Dispose()

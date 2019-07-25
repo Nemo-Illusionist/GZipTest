@@ -20,9 +20,11 @@ namespace GZipLib.Settings
             {
                 settings = new CompressorSettings
                 {
-                    PageSize = Constants.PageSize, BufferSize = Constants.BufferSize,
-                    ThreadPoolSize = Constants.ThreadPoolSize, ReaderQueueWithCache = Constants.ReaderQueueWithCache,
-                    ModIndex = Constants.ModIndex, InputIndex = Constants.InputIndex,
+                    PageSize = Constants.PageSize, 
+                    BufferSize = Constants.BufferSize,
+                    ThreadPoolSize = Constants.ThreadPoolSize, 
+                    ModIndex = Constants.ModIndex, 
+                    InputIndex = Constants.InputIndex,
                     OutputIndex = Constants.OutputIndex,
                 };
             }

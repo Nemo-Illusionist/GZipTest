@@ -1,53 +1,26 @@
 using System;
+using System.Collections.Generic;
+using GZipLib.Settings;
 
 namespace GZipLib.Reader
 {
-    public class ReaderQueue : IReaderQueue
+    public class ReaderQueue : BaseReaderQueue
     {
-        private readonly IReader _reader;
-        private readonly int _pageSize;
-        private long _position;
-        private long _leftBytes;
-        private int _index;
-
-        public ReaderQueue(IReader reader, int pageSize)
+        public ReaderQueue(IReader reader, CompressorSettings settings) : base(reader, settings)
         {
-            if (pageSize <= 0) throw new ArgumentOutOfRangeException(nameof(pageSize));
-            _reader = reader ?? throw new ArgumentNullException(nameof(reader));
-            _pageSize = pageSize;
-            _position = 0;
-            _index = 0;
-            _leftBytes = _reader.Length;
         }
 
-        public ReadingPart Next()
-        {
-            long position;
-            int length;
-            int index;
-            lock (_reader)
-            {
-                if (_leftBytes <= 0) return null;
-
-                _position = _reader.Length - _leftBytes;
-                position = _position;
-                length = _leftBytes < _pageSize ? (int) _leftBytes : _pageSize;
-                _leftBytes -= length;
-                index = _index++;
-            }
-
-            return new ReadingPart(index, _reader.Read(position, length));
-        }
-
-        public bool IsNext(long position)
+        public override bool IsNext(long position)
         {
             if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
-            return position <= _reader.Length / _pageSize;
+            return position <= Reader.Length / Settings.PageSize;
         }
 
-        public void Dispose()
+        protected override byte[] Read()
         {
-            _reader?.Dispose();
+            var length = LeftBytes < Settings.PageSize ? (int) LeftBytes : Settings.PageSize;
+            LeftBytes -= length;
+            return Reader.Read(length);
         }
     }
 }

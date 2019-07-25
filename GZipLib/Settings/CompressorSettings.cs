@@ -8,7 +8,6 @@ namespace GZipLib.Settings
         public int PageSize { get; set; }
         public int BufferSize { get; set; }
         public int ThreadPoolSize { get; set; }
-        public bool ReaderQueueWithCache { get; set; }
 
         public int OutputIndex { get; set; }
         public int InputIndex { get; set; }

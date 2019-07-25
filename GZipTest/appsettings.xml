@@ -3,7 +3,6 @@
     <PageSize>4194304</PageSize>
     <BufferSize>81920</BufferSize>
     <ThreadPoolSize>20</ThreadPoolSize>
-    <ReaderQueueWithCache>true</ReaderQueueWithCache>
     <ModIndex>0</ModIndex>
     <InputIndex>1</InputIndex>
     <OutputIndex>2</OutputIndex>

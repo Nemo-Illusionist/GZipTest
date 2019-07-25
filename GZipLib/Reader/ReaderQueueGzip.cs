@@ -1,52 +1,59 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using GZipLib.Settings;
 
 namespace GZipLib.Reader
 {
-    public class ReaderQueueGzip : BaseReaderQueueGzip, IReaderQueue
+    public class ReaderQueueGzip : BaseReaderQueue
     {
-        private readonly IReadOnlyList<byte> _header;
-        private readonly int _bufferSize;
+        private readonly byte[] _header;
 
-        private long _leftBytes;
-        private int _index;
-
-        public ReaderQueueGzip(IReader reader, int bufferSize) : base(reader)
+        public ReaderQueueGzip(IReader reader, CompressorSettings settings) : base(reader, settings)
         {
-            if (bufferSize <= 0) throw new ArgumentOutOfRangeException(nameof(bufferSize));
-            _bufferSize = bufferSize;
             _header = ReadHeader();
-            _leftBytes = reader.Length - _header.Count;
-            _index = 0;
+            LeftBytes -= _header.Length;
         }
 
-        public ReadingPart Next()
-        {
-            int index;
-            var gzipBlock = new List<byte>(_bufferSize);
-            gzipBlock.AddRange(_header);
-
-            lock (Reader)
-            {
-                if (_leftBytes <= 0) return null;
-
-                _leftBytes = ReadBlock(_leftBytes, gzipBlock, _header.ToArray());
-                index = _index++;
-            }
-
-            return new ReadingPart(index, gzipBlock.ToArray());
-        }
-
-        public bool IsNext(long position)
+        public override bool IsNext(long position)
         {
             if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
-            return !(_leftBytes <= 0 && _index == position);
+            return !(LeftBytes <= 0 && Index == position);
         }
 
-        public void Dispose()
+        protected override byte[] Read()
         {
-            Reader?.Dispose();
+            var headerCount = 0;
+
+            var bytes = new List<byte>();
+            while (LeftBytes > 0)
+            {
+                var curByte = Reader.Read();
+                bytes.Add(curByte);
+                LeftBytes--;
+
+                if (curByte == _header[headerCount])
+                {
+                    headerCount++;
+                    if (headerCount != _header.Length)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        bytes.RemoveRange(bytes.Count - _header.Length, _header.Length);
+                        break;
+                    }
+                }
+
+                headerCount = 0;
+            }
+
+            return bytes.ToArray();
+        }
+
+        private byte[] ReadHeader()
+        {
+            return Reader.Read(Constants.DefaultGzipHeaderLength);
         }
     }
 }

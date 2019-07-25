@@ -7,7 +7,7 @@ namespace GZipLib.Writer
 {
     public class WriterQueue : IWriterQueue
     {
-        public event EventHandler EndWriterQueueEvent;
+        public event EventHandler EndQueueEvent;
 
         private readonly Dictionary<long, byte[]> _parts;
         private INextCheck _nextCheck;
@@ -99,7 +99,7 @@ namespace GZipLib.Writer
                 position++;
             }
 
-            EndWriterQueueEvent?.Invoke(this, EventArgs.Empty);
+            EndQueueEvent?.Invoke(this, EventArgs.Empty);
         }
     }
 }
