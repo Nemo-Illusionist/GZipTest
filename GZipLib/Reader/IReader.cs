@@ -4,7 +4,8 @@ namespace GZipLib.Reader
 {
     public interface IReader : IDisposable
     {
-        long Length { get; }
+        long LeftBytes { get; }
+        
         byte[] Read(int length);
         byte Read();
     }

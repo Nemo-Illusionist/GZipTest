@@ -5,7 +5,7 @@ namespace GZipLib.Reader
 {
     public class FileReader : IReader
     {
-        public long Length { get; }
+        public long LeftBytes { get; private set; }
         private readonly FileStream _stream;
 
         public FileReader(string filePath)
@@ -13,7 +13,7 @@ namespace GZipLib.Reader
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentException("Path cannot be null or empty.", nameof(filePath));
 
-            Length = new FileInfo(filePath).Length;
+            LeftBytes = new FileInfo(filePath).Length;
             _stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
         }
 
@@ -26,6 +26,7 @@ namespace GZipLib.Reader
             lock (_stream)
             {
                 _stream.Read(bytes, 0, length);
+                LeftBytes -= length;
             }
 
             return bytes;
@@ -33,10 +34,14 @@ namespace GZipLib.Reader
 
         public byte Read()
         {
+            byte b;
             lock (_stream)
             {
-                return (byte) _stream.ReadByte();
+                b = (byte) _stream.ReadByte();
+                LeftBytes--;
             }
+
+            return b;
         }
 
         public void Dispose()

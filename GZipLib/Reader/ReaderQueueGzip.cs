@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using GZipLib.Settings;
 
@@ -11,25 +10,17 @@ namespace GZipLib.Reader
         public ReaderQueueGzip(IReader reader, CompressorSettings settings) : base(reader, settings)
         {
             _header = ReadHeader();
-            LeftBytes -= _header.Length;
-        }
-
-        public override bool IsNext(long position)
-        {
-            if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
-            return !(LeftBytes <= 0 && Index == position);
         }
 
         protected override byte[] Read()
         {
             var headerCount = 0;
 
-            var bytes = new List<byte>();
-            while (LeftBytes > 0)
+            var bytes = new List<byte>(_header);
+            while (Reader.LeftBytes > 0)
             {
                 var curByte = Reader.Read();
                 bytes.Add(curByte);
-                LeftBytes--;
 
                 if (curByte == _header[headerCount])
                 {

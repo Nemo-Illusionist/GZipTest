@@ -10,28 +10,30 @@ namespace GZipLib.Reader
         public event EventHandler EndQueueEvent;
 
         protected IReader Reader { get; }
-        protected int Index { get; private set; }
-        protected long LeftBytes { get; set; }
         protected CompressorSettings Settings { get; }
-
 
         private readonly Dictionary<long, byte[]> _parts;
         private readonly CancellationTokenSource _cancellationToken;
         private readonly AutoResetEvent _readerWaitHandler;
+        private readonly AutoResetEvent _nextWaitHandler;
 
         private Thread _thread;
-
+        private int _count;
+        private int _index;
+        private bool _isCancel;
 
         protected BaseReaderQueue(IReader reader, CompressorSettings settings)
         {
             Reader = reader ?? throw new ArgumentNullException(nameof(reader));
             Settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
-            Index = 0;
-            LeftBytes = Reader.Length;
+            _index = 0;
+            _count = 0;
+            _isCancel = false;
             _parts = new Dictionary<long, byte[]>();
             _cancellationToken = new CancellationTokenSource();
             _readerWaitHandler = new AutoResetEvent(false);
+            _nextWaitHandler = new AutoResetEvent(false);
         }
 
         public void Start()
@@ -47,28 +49,48 @@ namespace GZipLib.Reader
 
         public ReadingPart Next()
         {
-            ReadingPart part;
-            lock (_parts)
+            ReadingPart part = null;
+            var isWait = false;
+            while (part == null)
             {
-                if (!IsNext(Index)) return null;
+                if (isWait)
+                {
+                    _nextWaitHandler.WaitOne();
+                }
 
-                //todo: need to add waiting
-                if (!_parts.TryGetValue(Index, out var bytes)) return null;
+                lock (_parts)
+                {
+                    if (!IsNext(_index)) return null;
 
-                _parts.Remove(Index);
+                    if (!_parts.TryGetValue(_index, out var bytes))
+                    {
+                        isWait = true;
+                    }
+                    else
+                    {
+                        _parts.Remove(_index);
+                        part = new ReadingPart(_index++, bytes);
+                    }
+                }
+
                 _readerWaitHandler.Set();
-                part = new ReadingPart(Index++, bytes);
             }
 
             return part;
         }
 
-        public abstract bool IsNext(long position);
+        public bool IsNext(long position)
+        {
+            if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
+            return !_isCancel && !(Reader.LeftBytes <= 0 && position == _count);
+        }
 
         public void Cancel()
         {
+            _isCancel = true;
             _cancellationToken.Cancel();
             _readerWaitHandler.Set();
+            _nextWaitHandler.Set();
         }
 
         public void Join()
@@ -79,6 +101,7 @@ namespace GZipLib.Reader
         public void Dispose()
         {
             _readerWaitHandler.Dispose();
+            _nextWaitHandler.Dispose();
             _cancellationToken.Dispose();
             Reader.Dispose();
         }
@@ -92,7 +115,7 @@ namespace GZipLib.Reader
             var isWait = false;
             var index = 0;
 
-            while (LeftBytes > 0)
+            while (Reader.LeftBytes > 0)
             {
                 if (isWait)
                 {
@@ -117,10 +140,13 @@ namespace GZipLib.Reader
                 lock (_parts)
                 {
                     _parts.Add(index, bytes);
+                    _nextWaitHandler.Set();
                 }
 
                 index++;
             }
+
+            _count = index;
 
             EndQueueEvent?.Invoke(this, EventArgs.Empty);
         }
