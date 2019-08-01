@@ -7,14 +7,14 @@ namespace GZipLib.Writer
 {
     public class WriterQueue : IWriterQueue
     {
-        public event EventHandler EndQueueEvent;
-
         private readonly Dictionary<long, byte[]> _parts;
         private INextCheck _nextCheck;
         private readonly IWriter _writer;
         private readonly CancellationTokenSource _cancellationToken;
         private readonly AutoResetEvent _waitHandler;
         private Thread _thread;
+
+        private volatile Exception _exception;
 
         public WriterQueue(IWriter writer)
         {
@@ -23,6 +23,7 @@ namespace GZipLib.Writer
             _parts = new Dictionary<long, byte[]>();
             _cancellationToken = new CancellationTokenSource();
             _waitHandler = new AutoResetEvent(false);
+            _exception = null;
         }
 
         public void Add(long position, byte[] bytes)
@@ -42,7 +43,7 @@ namespace GZipLib.Writer
             if (_thread != null) return;
             _nextCheck = nextCheck ?? throw new ArgumentNullException(nameof(nextCheck));
 
-            _thread = new Thread(Writer)
+            _thread = new Thread(WriterThread)
             {
                 IsBackground = true
             };
@@ -58,6 +59,7 @@ namespace GZipLib.Writer
         public void Join()
         {
             _thread.Join();
+            if (_exception != null) throw _exception;
         }
 
         public void Dispose()
@@ -67,39 +69,47 @@ namespace GZipLib.Writer
             _waitHandler?.Dispose();
         }
 
-        private void Writer()
+        private void WriterThread()
         {
-            var token = _cancellationToken.Token;
-            var position = 0;
-            var isWait = true;
-
-            while (_nextCheck.IsNext(position))
+            try
             {
-                if (isWait)
-                {
-                    _waitHandler.WaitOne();
-                }
+                var token = _cancellationToken.Token;
+                var position = 0;
+                var isWait = true;
 
-                token.ThrowIfCancellationRequested();
-
-                byte[] bytes;
-                lock (_parts)
+                while (_nextCheck.IsNext(position))
                 {
-                    if (!_parts.TryGetValue(position, out bytes))
+                    if (isWait)
                     {
-                        isWait = true;
-                        continue;
+                        _waitHandler.WaitOne();
                     }
 
-                    isWait = false;
-                    _parts.Remove(position);
+                    token.ThrowIfCancellationRequested();
+
+                    byte[] bytes;
+                    lock (_parts)
+                    {
+                        if (!_parts.TryGetValue(position, out bytes))
+                        {
+                            isWait = true;
+                            continue;
+                        }
+
+                        isWait = false;
+                        _parts.Remove(position);
+                    }
+
+                    _writer.Write(bytes);
+                    position++;
                 }
-
-                _writer.Write(bytes);
-                position++;
             }
-
-            EndQueueEvent?.Invoke(this, EventArgs.Empty);
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception e)
+            {
+                _exception = e;
+            }
         }
     }
 }

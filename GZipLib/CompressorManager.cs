@@ -18,6 +18,8 @@ namespace GZipLib
 
         private IReaderQueue _readerQueue;
 
+        private volatile Exception _exception;
+
         public CompressorManager(IWriterQueue writerQueue, IReaderQueueFactory readerQueueFactory,
             ICompressor compressor, CompressorSettings settings) : this()
         {
@@ -25,6 +27,7 @@ namespace GZipLib
             _readerQueueFactory = readerQueueFactory ?? throw new ArgumentNullException(nameof(readerQueueFactory));
             _compressor = compressor ?? throw new ArgumentNullException(nameof(compressor));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _exception = null;
         }
 
         private CompressorManager()
@@ -34,10 +37,9 @@ namespace GZipLib
 
         public void Run(CompressionMode mode)
         {
-            var method = CompressorMode(mode);
-
             var token = _cancellationToken.Token;
 
+            var method = CompressorMode(mode);
             _readerQueue = _readerQueueFactory.Create(mode);
             _readerQueue.Start();
             _writerQueue.Start(_readerQueue);
@@ -45,15 +47,26 @@ namespace GZipLib
             {
                 var thread = new Thread(() =>
                 {
-                    var part = _readerQueue.Next();
-                    while (part != null)
+                    try
                     {
-                        token.ThrowIfCancellationRequested();
+                        var part = _readerQueue.Next();
+                        while (part != null)
+                        {
+                            token.ThrowIfCancellationRequested();
 
-                        var bytes = part.Data;
-                        bytes = method(bytes);
-                        _writerQueue.Add(part.Index, bytes);
-                        part = _readerQueue.Next();
+                            var bytes = part.Data;
+                            bytes = method(bytes);
+                            _writerQueue.Add(part.Index, bytes);
+                            part = _readerQueue.Next();
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }
+                    catch (Exception e)
+                    {
+                        _exception = e;
+                        Cancel();
                     }
                 });
                 thread.Start();
@@ -64,6 +77,7 @@ namespace GZipLib
         {
             _readerQueue.Join();
             _writerQueue.Join();
+            if (_exception != null) throw _exception;
         }
 
         public void Cancel()

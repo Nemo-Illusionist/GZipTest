@@ -7,8 +7,6 @@ namespace GZipLib.Reader
 {
     public abstract class BaseReaderQueue : IReaderQueue
     {
-        public event EventHandler EndQueueEvent;
-
         protected IReader Reader { get; }
         protected CompressorSettings Settings { get; }
 
@@ -22,6 +20,8 @@ namespace GZipLib.Reader
         private int _index;
         private bool _isCancel;
 
+        private volatile Exception _exception;
+
         protected BaseReaderQueue(IReader reader, CompressorSettings settings)
         {
             Reader = reader ?? throw new ArgumentNullException(nameof(reader));
@@ -34,6 +34,7 @@ namespace GZipLib.Reader
             _cancellationToken = new CancellationTokenSource();
             _readerWaitHandler = new AutoResetEvent(false);
             _nextWaitHandler = new AutoResetEvent(false);
+            _exception = null;
         }
 
         public void Start()
@@ -96,6 +97,7 @@ namespace GZipLib.Reader
         public void Join()
         {
             _thread.Join();
+            if (_exception != null) throw _exception;
         }
 
         public void Dispose()
@@ -110,45 +112,53 @@ namespace GZipLib.Reader
 
         private void ReaderThread()
         {
-            var token = _cancellationToken.Token;
-
-            var isWait = false;
-            var index = 0;
-
-            while (Reader.LeftBytes > 0)
+            try
             {
-                if (isWait)
-                {
-                    _readerWaitHandler.WaitOne();
-                }
+                var token = _cancellationToken.Token;
 
-                token.ThrowIfCancellationRequested();
+                var isWait = false;
+                var index = 0;
 
-                lock (_parts)
+                while (Reader.LeftBytes > 0)
                 {
-                    if (_parts.Count >= Settings.ThreadPoolSize)
+                    if (isWait)
                     {
-                        isWait = true;
-                        continue;
+                        _readerWaitHandler.WaitOne();
                     }
 
-                    isWait = false;
+                    token.ThrowIfCancellationRequested();
+
+                    lock (_parts)
+                    {
+                        if (_parts.Count >= Settings.ThreadPoolSize)
+                        {
+                            isWait = true;
+                            continue;
+                        }
+
+                        isWait = false;
+                    }
+
+                    var bytes = Read();
+
+                    lock (_parts)
+                    {
+                        _parts.Add(index, bytes);
+                        _nextWaitHandler.Set();
+                    }
+
+                    index++;
                 }
 
-                var bytes = Read();
-
-                lock (_parts)
-                {
-                    _parts.Add(index, bytes);
-                    _nextWaitHandler.Set();
-                }
-
-                index++;
+                _count = index;
             }
-
-            _count = index;
-
-            EndQueueEvent?.Invoke(this, EventArgs.Empty);
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception e)
+            {
+                _exception = e;
+            }
         }
     }
 }
