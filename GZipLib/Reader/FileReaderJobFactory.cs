@@ -1,15 +1,16 @@
 using System;
 using System.IO.Compression;
+using GZipLib.Queue;
 using GZipLib.Settings;
 
 namespace GZipLib.Reader
 {
-    public class FileReaderQueueFactory : IReaderQueueFactory
+    public class FileReaderJobFactory : IReaderJobFactory
     {
         private readonly string _filePath;
         private readonly CompressorSettings _settings;
 
-        public FileReaderQueueFactory(string filePath, CompressorSettings settings)
+        public FileReaderJobFactory(string filePath, CompressorSettings settings)
         {
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentException("Path cannot be null or empty.", nameof(filePath));
@@ -17,14 +18,14 @@ namespace GZipLib.Reader
             _filePath = filePath;
         }
 
-        public IReaderQueue Create(CompressionMode mode)
+        public IReaderJob Create(IReaderQueue queue, CompressionMode mode)
         {
             switch (mode)
             {
                 case CompressionMode.Compress:
-                    return new ReaderQueue(new FileReader(_filePath), _settings);
+                    return new ReaderJob(new FileReader(_filePath), queue, _settings);
                 case CompressionMode.Decompress:
-                    return new ReaderQueueGzip(new FileReader(_filePath), _settings);
+                    return new ReaderJobGzip(new FileReader(_filePath), queue, _settings);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mode), mode, "This mod is not supported.");
             }

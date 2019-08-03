@@ -1,4 +1,4 @@
-namespace GZipLib.Queue
+namespace GZipLib.Core
 {
     public interface INextCheck
     {

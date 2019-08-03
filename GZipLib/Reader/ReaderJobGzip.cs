@@ -1,13 +1,15 @@
 using System.Collections.Generic;
+using GZipLib.Core;
 using GZipLib.Settings;
 
 namespace GZipLib.Reader
 {
-    public class ReaderQueueGzip : BaseReaderQueue
+    public class ReaderJobGzip : BaseReaderJob
     {
         private readonly byte[] _header;
 
-        public ReaderQueueGzip(IReader reader, CompressorSettings settings) : base(reader, settings)
+        public ReaderJobGzip(IReader reader, IReaderQueue queue, CompressorSettings settings)
+            : base(reader, queue, settings)
         {
             _header = ReadHeader();
         }

@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Compression;
 using GZipLib;
 using GZipLib.Compressor;
+using GZipLib.Queue;
 using GZipLib.Reader;
 using GZipLib.Settings;
 using GZipLib.Writer;
@@ -33,10 +34,14 @@ namespace GZipTest
                 }
 
                 var compressor = new GZipCompressor(settings.BufferSize);
-                var readerQueueFactory = new FileReaderQueueFactory(input, settings);
-                var writerQueue = new WriterQueue(new FileWriter(output));
+                var readerJobFactory = new FileReaderJobFactory(input, settings);
+                var writerJobFactory = new FileWriterJobFactory(output);
 
-                using (var manager = new CompressorManager(writerQueue, readerQueueFactory, compressor, settings))
+                var readerQueue = new Queue();
+                var writerQueue = new Queue();
+
+                using (var manager = new CompressorManager(readerQueue, writerQueue,
+                    writerJobFactory, readerJobFactory, compressor, settings))
                 {
                     manager.Run(mode);
                     manager.Join();

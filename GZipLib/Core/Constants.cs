@@ -1,4 +1,4 @@
-namespace GZipLib
+namespace GZipLib.Core
 {
     internal static class Constants
     {

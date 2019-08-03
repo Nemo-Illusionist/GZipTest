@@ -1,13 +1,15 @@
+using GZipLib.Reader;
 using GZipLib.Settings;
 
-namespace GZipLib.Reader
+namespace GZipLib.Queue
 {
-    public class ReaderQueue : BaseReaderQueue
+    public class ReaderJob : BaseReaderJob
     {
-        public ReaderQueue(IReader reader, CompressorSettings settings) : base(reader, settings)
+        public ReaderJob(IReader reader, IReaderQueue queue, CompressorSettings settings)
+            : base(reader, queue, settings)
         {
         }
-        
+
         protected override byte[] Read()
         {
             var length = Reader.LeftBytes < Settings.PageSize ? (int) Reader.LeftBytes : Settings.PageSize;
