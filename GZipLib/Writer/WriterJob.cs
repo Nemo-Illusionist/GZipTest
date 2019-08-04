@@ -24,7 +24,7 @@ namespace GZipLib.Writer
         public void Start(INextCheck nextCheck)
         {
             if (CeckStart()) return;
-            
+
             _nextCheck = nextCheck ?? throw new ArgumentNullException(nameof(nextCheck));
             StartThread();
         }
@@ -38,32 +38,24 @@ namespace GZipLib.Writer
         protected override void JobThread(CancellationToken token)
         {
             var position = 0;
-            var isWait = true;
 
             while (_nextCheck.IsNext(position))
             {
-                if (isWait)
-                {
-                    WaitHandler.WaitOne();
-                }
-
+                WaitHandler.WaitOne();
                 token.ThrowIfCancellationRequested();
 
-                byte[] bytes;
-                lock (_queue)
+                var readingPart = _queue.Next();
+                if (readingPart == null)
                 {
-                    var readingPart = _queue.Next();
-                    if (readingPart == null)
-                    {
-                        isWait = true;
-                        continue;
-                    }
-
-                    bytes = readingPart.Data;
-                    isWait = false;
+                    WaitHandler.Reset();
+                    continue;
                 }
 
+                WaitHandler.Set();
+
+                var bytes = readingPart.Data;
                 _writer.Write(bytes);
+
                 position++;
             }
         }

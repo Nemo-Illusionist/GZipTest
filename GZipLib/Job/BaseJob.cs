@@ -16,7 +16,7 @@ namespace GZipLib.Job
         protected BaseJob()
         {
             _cancellationToken = new CancellationTokenSource();
-            WaitHandler = new AutoResetEvent(false);
+            WaitHandler = new AutoResetEvent(true);
 
             _exception = null;
             _thread = null;

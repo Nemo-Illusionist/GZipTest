@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using GZipLib.Reader;
+using GZipLib.Core;
 
 namespace GZipLib.Queue
 {
@@ -38,16 +38,16 @@ namespace GZipLib.Queue
             }
         }
 
-        public ReadingPart Next()
+        public Part Next()
         {
-            ReadingPart part = null;
+            Part part = null;
 
             lock (_parts)
             {
                 if (_parts.TryGetValue(_index, out var bytes))
                 {
                     _parts.Remove(_index);
-                    part = new ReadingPart(_index++, bytes);
+                    part = new Part(_index++, bytes);
                     NextEvent?.Invoke(this, EventArgs.Empty);
                 }
             }

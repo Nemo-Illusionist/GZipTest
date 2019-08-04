@@ -1,13 +1,13 @@
 using System;
 
-namespace GZipLib.Reader
+namespace GZipLib.Core
 {
-    public class ReadingPart
+    public class Part
     {
         public int Index { get; }
         public byte[] Data { get; }
 
-        public ReadingPart(int index, byte[] data)
+        public Part(int index, byte[] data)
         {
             if (index < 0) throw new ArgumentOutOfRangeException(nameof(index));
             Data = data ?? throw new ArgumentNullException(nameof(data));

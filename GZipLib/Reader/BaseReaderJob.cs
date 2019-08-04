@@ -21,7 +21,6 @@ namespace GZipLib.Reader
             Settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
             _queue.NextEvent += WaitHandlerSet;
-
             _count = 0;
         }
 
@@ -47,34 +46,22 @@ namespace GZipLib.Reader
         protected override void JobThread(CancellationToken token)
         {
             var index = 0;
-            var isWait = false;
 
             while (Reader.LeftBytes > 0)
             {
-                if (isWait)
-                {
-                    WaitHandler.WaitOne();
-                }
-
+                WaitHandler.WaitOne();
                 token.ThrowIfCancellationRequested();
 
-                lock (_queue)
+                if (_queue.Count() >= Settings.ThreadPoolSize)
                 {
-                    if (_queue.Count() >= Settings.ThreadPoolSize)
-                    {
-                        isWait = true;
-                        continue;
-                    }
-
-                    isWait = false;
+                    WaitHandler.Reset();
+                    continue;
                 }
+
+                WaitHandler.Set();
 
                 var bytes = Read();
-
-                lock (_queue)
-                {
-                    _queue.Add(index, bytes);
-                }
+                _queue.Add(index, bytes);
 
                 index++;
             }

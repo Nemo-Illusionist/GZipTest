@@ -1,9 +1,9 @@
-using GZipLib.Reader;
+using GZipLib.Core;
 
 namespace GZipLib.Queue
 {
     public interface IQueueNext
     {
-        ReadingPart Next();
+        Part Next();
     }
 }
