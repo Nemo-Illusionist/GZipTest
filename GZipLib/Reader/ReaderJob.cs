@@ -1,7 +1,6 @@
-using GZipLib.Reader;
 using GZipLib.Settings;
 
-namespace GZipLib.Queue
+namespace GZipLib.Reader
 {
     public class ReaderJob : BaseReaderJob
     {

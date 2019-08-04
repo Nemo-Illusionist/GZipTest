@@ -1,6 +1,5 @@
 using System;
 using System.IO.Compression;
-using GZipLib.Queue;
 using GZipLib.Settings;
 
 namespace GZipLib.Reader
