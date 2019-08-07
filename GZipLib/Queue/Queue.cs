@@ -54,9 +54,5 @@ namespace GZipLib.Queue
 
             return part;
         }
-
-        public void Dispose()
-        {
-        }
     }
 }

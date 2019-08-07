@@ -12,7 +12,7 @@ namespace GZipLib.Reader
 
         private readonly IReaderQueue _queue;
 
-        private int _count;
+        private volatile int _count;
 
         protected BaseReaderJob(IReader reader, IReaderQueue queue, CompressorSettings settings)
         {

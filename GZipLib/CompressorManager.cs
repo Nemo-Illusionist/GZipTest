@@ -21,10 +21,8 @@ namespace GZipLib
         private readonly CancellationTokenSource _cancellationToken;
         private readonly AutoResetEvent _waitHandler;
 
-
         private volatile IReaderJob _readerJob;
-        private IJob _writerJob;
-
+        private volatile IJob _writerJob;
         private volatile Exception _exception;
 
 
@@ -86,6 +84,8 @@ namespace GZipLib
                         _waitHandler.WaitOne();
                         part = _readerQueue.Next();
                     }
+
+                    _waitHandler.Set();
                 }
             }
             catch (OperationCanceledException)
@@ -119,17 +119,16 @@ namespace GZipLib
             _readerJob.Cancel();
             _writerJob.Cancel();
             _cancellationToken.Cancel();
+            _waitHandler.Set();
         }
 
         public void Dispose()
         {
             _readerJob?.Dispose();
-            _readerQueue?.Dispose();
-
             _writerJob?.Dispose();
-            _writerQueue?.Dispose();
 
             _cancellationToken?.Dispose();
+            _waitHandler.Dispose();
         }
 
         private Func<byte[], byte[]> CompressorMode(CompressionMode mode)

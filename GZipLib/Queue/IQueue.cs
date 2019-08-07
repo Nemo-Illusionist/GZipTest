@@ -1,10 +1,9 @@
-using System;
 using GZipLib.Reader;
 using GZipLib.Writer;
 
 namespace GZipLib.Queue
 {
-    public interface IQueue : IReaderQueue, IWriterQueue, IDisposable
+    public interface IQueue : IReaderQueue, IWriterQueue
     {
     }
 }
