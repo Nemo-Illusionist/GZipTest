@@ -17,36 +17,8 @@ namespace GZipTest
             var exitCode = 1;
             try
             {
-                var settings = CompressorSettingsManager.GetOrDefault("appsettings.xml");
-
-                CompressionMode mode;
-                string input;
-                string output;
-                try
-                {
-                    mode = GetMode(args, settings);
-                    input = GetInput(args, settings);
-                    output = GetOutput(args, settings);
-                }
-                catch (IndexOutOfRangeException e)
-                {
-                    throw new Exception("Please check the parameters: mode input output", e);
-                }
-
-                var compressor = new GZipCompressor(settings.BufferSize);
-                var readerJobFactory = new FileReaderJobFactory(input, settings);
-                var writerJobFactory = new FileWriterJobFactory(output);
-
-                var readerQueue = new Queue();
-                var writerQueue = new Queue();
-
-                using (var manager = new CompressorManager(readerQueue, writerQueue,
-                    writerJobFactory, readerJobFactory, compressor, settings))
-                {
-                    manager.Run(mode);
-                    manager.Join();
-                }
-
+                File.Delete(args[2]);
+                Compressor(args);
                 exitCode = 0;
             }
             catch (Exception e)
@@ -55,6 +27,39 @@ namespace GZipTest
             }
 
             Environment.Exit(exitCode);
+        }
+
+        private static void Compressor(string[] args)
+        {
+            var settings = CompressorSettingsManager.GetOrDefault("appsettings.xml");
+
+            CompressionMode mode;
+            string input;
+            string output;
+            try
+            {
+                mode = GetMode(args, settings);
+                input = GetInput(args, settings);
+                output = GetOutput(args, settings);
+            }
+            catch (IndexOutOfRangeException e)
+            {
+                throw new Exception("Please check the parameters: mode input output", e);
+            }
+
+            var compressor = new GZipCompressor(settings.BufferSize);
+            var readerJobFactory = new FileReaderJobFactory(input, settings);
+            var writerJobFactory = new FileWriterJobFactory(output);
+
+            var readerQueue = new Queue();
+            var writerQueue = new Queue();
+
+            using (var manager = new CompressorManager(readerQueue, writerQueue,
+                writerJobFactory, readerJobFactory, compressor, settings))
+            {
+                manager.Run(mode);
+                manager.Join();
+            }
         }
 
         private static string GetOutput(string[] args, CompressorSettings settings)

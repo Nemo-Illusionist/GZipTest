@@ -1,5 +1,6 @@
 using System;
 using GZipLib.Reader;
+using GZipLib.Writer;
 
 namespace GZipLib.Queue
 {

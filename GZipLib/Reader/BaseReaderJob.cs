@@ -30,11 +30,6 @@ namespace GZipLib.Reader
             return !(Reader.LeftBytes <= 0 && position == _count);
         }
 
-        public void Start()
-        {
-            StartThread();
-        }
-
         public override void Dispose()
         {
             base.Dispose();

@@ -21,7 +21,12 @@ namespace GZipLib.Job
             _exception = null;
             _thread = null;
         }
-        
+
+        public bool IsAlive()
+        {
+            return _thread.IsAlive;
+        }
+
         public virtual void Cancel()
         {
             _cancellationToken.Cancel();
@@ -40,7 +45,7 @@ namespace GZipLib.Job
             _cancellationToken.Dispose();
         }
 
-        protected void StartThread()
+        public void Start()
         {
             if (CeckStart()) return;
 

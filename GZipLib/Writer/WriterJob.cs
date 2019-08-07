@@ -2,31 +2,22 @@ using System;
 using System.Threading;
 using GZipLib.Core;
 using GZipLib.Job;
-using GZipLib.Queue;
 
 namespace GZipLib.Writer
 {
-    public class WriterJob : BaseJob, IWriterJob
+    public class WriterJob : BaseJob
     {
         private readonly IWriter _writer;
         private readonly IWriterQueue _queue;
+        private readonly INextCheck _nextCheck;
 
-        private INextCheck _nextCheck;
-
-        public WriterJob(IWriter writer, IWriterQueue queue)
+        public WriterJob(IWriter writer, INextCheck nextCheck, IWriterQueue queue)
         {
             _writer = writer ?? throw new ArgumentNullException(nameof(writer));
+            _nextCheck = nextCheck ?? throw new ArgumentNullException(nameof(nextCheck));
             _queue = queue ?? throw new ArgumentNullException(nameof(queue));
 
             _queue.AddEvent += WaitHandlerSet;
-        }
-
-        public void Start(INextCheck nextCheck)
-        {
-            if (CeckStart()) return;
-
-            _nextCheck = nextCheck ?? throw new ArgumentNullException(nameof(nextCheck));
-            StartThread();
         }
 
         public override void Dispose()

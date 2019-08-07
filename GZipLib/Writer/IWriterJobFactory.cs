@@ -1,10 +1,11 @@
 using System.IO.Compression;
-using GZipLib.Queue;
+using GZipLib.Core;
+using GZipLib.Job;
 
 namespace GZipLib.Writer
 {
     public interface IWriterJobFactory
     {
-        IWriterJob Create(IWriterQueue queue, CompressionMode mode);
+        IJob Create(IWriterQueue queue, INextCheck nextCheck, CompressionMode mode);
     }
 }

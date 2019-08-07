@@ -1,6 +1,7 @@
 using System;
 using System.IO.Compression;
-using GZipLib.Queue;
+using GZipLib.Core;
+using GZipLib.Job;
 
 namespace GZipLib.Writer
 {
@@ -15,13 +16,13 @@ namespace GZipLib.Writer
             _filePath = filePath;
         }
 
-        public IWriterJob Create(IWriterQueue queue, CompressionMode mode)
+        public IJob Create(IWriterQueue queue, INextCheck nextCheck, CompressionMode mode)
         {
             switch (mode)
             {
                 case CompressionMode.Compress:
                 case CompressionMode.Decompress:
-                    return new WriterJob(new FileWriter(_filePath), queue);
+                    return new WriterJob(new FileWriter(_filePath), nextCheck, queue);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mode), mode, "This mod is not supported.");
             }

@@ -5,6 +5,5 @@ namespace GZipLib.Reader
 {
     public interface IReaderJob : IJob, INextCheck
     {
-        void Start();
     }
 }

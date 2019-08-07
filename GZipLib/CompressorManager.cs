@@ -2,6 +2,7 @@ using System;
 using System.IO.Compression;
 using System.Threading;
 using GZipLib.Compressor;
+using GZipLib.Job;
 using GZipLib.Queue;
 using GZipLib.Reader;
 using GZipLib.Settings;
@@ -18,9 +19,11 @@ namespace GZipLib
         private readonly IQueue _readerQueue;
         private readonly IQueue _writerQueue;
         private readonly CancellationTokenSource _cancellationToken;
+        private readonly AutoResetEvent _waitHandler;
 
-        private IReaderJob _readerJob;
-        private IWriterJob _writerJob;
+
+        private volatile IReaderJob _readerJob;
+        private IJob _writerJob;
 
         private volatile Exception _exception;
 
@@ -28,40 +31,35 @@ namespace GZipLib
         public CompressorManager(IQueue readerQueue, IQueue writerQueue,
             IWriterJobFactory writerJobFactory, IReaderJobFactory readerJobFactory,
             ICompressor compressor, CompressorSettings settings)
-            : this(writerJobFactory, readerJobFactory, compressor, settings)
-        {
-            _readerQueue = readerQueue ?? throw new ArgumentNullException(nameof(readerQueue));
-            _writerQueue = writerQueue ?? throw new ArgumentNullException(nameof(writerQueue));
-        }
-
-        public CompressorManager(IWriterJobFactory writerJobFactory, IReaderJobFactory readerJobFactory,
-            ICompressor compressor, CompressorSettings settings) : this()
+            : this()
         {
             _writerJobFactory = writerJobFactory ?? throw new ArgumentNullException(nameof(writerJobFactory));
             _readerJobFactory = readerJobFactory ?? throw new ArgumentNullException(nameof(readerJobFactory));
             _compressor = compressor ?? throw new ArgumentNullException(nameof(compressor));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
-            _readerQueue = new Queue.Queue();
-            _writerQueue = new Queue.Queue();
+            _readerQueue = readerQueue ?? throw new ArgumentNullException(nameof(readerQueue));
+            _writerQueue = writerQueue ?? throw new ArgumentNullException(nameof(writerQueue));
         }
 
         private CompressorManager()
         {
             _cancellationToken = new CancellationTokenSource();
+            _waitHandler = new AutoResetEvent(false);
         }
 
         public void Run(CompressionMode mode)
         {
             var token = _cancellationToken.Token;
-
             var method = CompressorMode(mode);
 
             _readerJob = _readerJobFactory.Create(_readerQueue, mode);
-            _writerJob = _writerJobFactory.Create(_writerQueue, mode);
+            _writerJob = _writerJobFactory.Create(_writerQueue, _readerJob, mode);
+
+            _readerQueue.AddEvent += (e, s) => _waitHandler.Set();
 
             _readerJob.Start();
-            _writerJob.Start(_readerJob);
+            _writerJob.Start();
 
             for (int i = 0; i < _settings.ThreadPoolSize; i++)
             {
@@ -83,6 +81,11 @@ namespace GZipLib
                     bytes = method(bytes);
                     _writerQueue.Add(part.Index, bytes);
                     part = _readerQueue.Next();
+                    while (_readerJob.IsAlive() && part == null)
+                    {
+                        _waitHandler.WaitOne();
+                        part = _readerQueue.Next();
+                    }
                 }
             }
             catch (OperationCanceledException)
@@ -97,8 +100,17 @@ namespace GZipLib
 
         public void Join()
         {
-            _readerJob.Join();
-            _writerJob.Join();
+            try
+            {
+                _readerJob.Join();
+                _writerJob.Join();
+            }
+            catch (Exception)
+            {
+                Cancel();
+                throw;
+            }
+
             if (_exception != null) throw _exception;
         }
 
