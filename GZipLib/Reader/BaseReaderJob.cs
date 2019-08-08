@@ -47,7 +47,7 @@ namespace GZipLib.Reader
                 WaitHandler.WaitOne();
                 token.ThrowIfCancellationRequested();
 
-                if (_queue.Count() >= Settings.ThreadPoolSize)
+                if (_queue.Count() > Settings.ThreadPoolSize)
                 {
                     WaitHandler.Reset();
                     continue;
