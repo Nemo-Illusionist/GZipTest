@@ -32,13 +32,12 @@ namespace GZipLib.Writer
 
             while (_nextCheck.IsNext(position))
             {
-                WaitHandler.WaitOne();
                 token.ThrowIfCancellationRequested();
 
                 var readingPart = _queue.Next();
                 if (readingPart == null)
                 {
-                    WaitHandler.Reset();
+                    WaitHandler.WaitOne();
                     continue;
                 }
 

@@ -44,12 +44,11 @@ namespace GZipLib.Reader
 
             while (Reader.LeftBytes > 0)
             {
-                WaitHandler.WaitOne();
                 token.ThrowIfCancellationRequested();
 
                 if (_queue.Count() > Settings.ThreadPoolSize)
                 {
-                    WaitHandler.Reset();
+                    WaitHandler.WaitOne();
                     continue;
                 }
 
