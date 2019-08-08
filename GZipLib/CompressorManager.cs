@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO.Compression;
 using System.Threading;
 using GZipLib.Compressor;
@@ -19,7 +20,7 @@ namespace GZipLib
         private readonly IQueue _readerQueue;
         private readonly IQueue _writerQueue;
         private readonly CancellationTokenSource _cancellationToken;
-        private readonly AutoResetEvent _waitHandler;
+        private readonly List<AutoResetEvent> _waitHandlers;
 
         private volatile IReaderJob _readerJob;
         private volatile IJob _writerJob;
@@ -43,49 +44,56 @@ namespace GZipLib
         private CompressorManager()
         {
             _cancellationToken = new CancellationTokenSource();
-            _waitHandler = new AutoResetEvent(false);
+            _waitHandlers = new List<AutoResetEvent>();
         }
 
         public void Run(CompressionMode mode)
         {
-            var token = _cancellationToken.Token;
+            var cancellationToken = _cancellationToken.Token;
             var method = CompressorMode(mode);
 
             _readerJob = _readerJobFactory.Create(_readerQueue, mode);
             _writerJob = _writerJobFactory.Create(_writerQueue, _readerJob, mode);
 
-            _readerQueue.AddEvent += (e, s) => _waitHandler.Set();
 
             _readerJob.Start();
             _writerJob.Start();
 
             for (int i = 0; i < _settings.ThreadPoolSize; i++)
             {
-                var thread = new Thread(() => { CompressorThread(token, method); });
+                var waitHandler = new AutoResetEvent(true);
+                var thread = new Thread(() => { CompressorThread(method, waitHandler, cancellationToken); });
                 thread.Start();
+                _readerQueue.AddEvent += (e, s) => waitHandler.Set();
+                _waitHandlers.Add(waitHandler);
             }
         }
 
-        private void CompressorThread(CancellationToken token, Func<byte[], byte[]> method)
+        private void CompressorThread(Func<byte[], byte[]> method,
+            AutoResetEvent waitHandler, CancellationToken cancellationToken)
         {
             try
             {
                 var part = _readerQueue.Next();
-                while (part != null)
+                while (_readerJob.IsAlive() || part != null)
                 {
-                    token.ThrowIfCancellationRequested();
-
-                    var bytes = part.Data;
-                    bytes = method(bytes);
-                    _writerQueue.Add(part.Index, bytes);
-                    part = _readerQueue.Next();
-                    while (_readerJob.IsAlive() && part == null)
+                    if (_readerJob.IsAlive() && part == null)
                     {
-                        _waitHandler.WaitOne();
-                        part = _readerQueue.Next();
+                        waitHandler.Reset();
                     }
 
-                    _waitHandler.Set();
+                    waitHandler.WaitOne();
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    if (part != null)
+                    {
+                        var bytes = part.Data;
+                        bytes = method(bytes);
+                        _writerQueue.Add(part.Index, bytes);
+                    }
+
+                    part = _readerQueue.Next();
+                    waitHandler.Set();
                 }
             }
             catch (OperationCanceledException)
@@ -119,7 +127,10 @@ namespace GZipLib
             _readerJob.Cancel();
             _writerJob.Cancel();
             _cancellationToken.Cancel();
-            _waitHandler.Set();
+            foreach (var waitHandler in _waitHandlers)
+            {
+                waitHandler.Set();
+            }
         }
 
         public void Dispose()
@@ -128,7 +139,10 @@ namespace GZipLib
             _writerJob?.Dispose();
 
             _cancellationToken?.Dispose();
-            _waitHandler.Dispose();
+            foreach (var waitHandler in _waitHandlers)
+            {
+                waitHandler.Dispose();
+            }
         }
 
         private Func<byte[], byte[]> CompressorMode(CompressionMode mode)
