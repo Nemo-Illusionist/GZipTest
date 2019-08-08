@@ -17,7 +17,6 @@ namespace GZipTest
             var exitCode = 1;
             try
             {
-                File.Delete(args[2]);
                 Compressor(args);
                 exitCode = 0;
             }
