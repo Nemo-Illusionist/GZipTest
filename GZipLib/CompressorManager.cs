@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO.Compression;
 using System.Threading;
 using GZipLib.Compressor;
+using GZipLib.Core;
 using GZipLib.Job;
 using GZipLib.Queue;
 using GZipLib.Reader;
@@ -74,25 +75,18 @@ namespace GZipLib
         {
             try
             {
-                var part = _readerQueue.Next();
+                Part part = null;
                 while (_readerJob.IsAlive() || part != null)
                 {
-                    if (_readerJob.IsAlive() && part == null)
-                    {
-                        waitHandler.Reset();
-                    }
-
                     waitHandler.WaitOne();
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    if (part != null)
-                    {
-                        var bytes = part.Data;
-                        bytes = method(bytes);
-                        _writerQueue.Add(part.Index, bytes);
-                    }
-
                     part = _readerQueue.Next();
+                    if (part == null) continue;
+                    
+                    var bytes = part.Data;
+                    bytes = method(bytes);
+                    _writerQueue.Add(part.Index, bytes);
                     waitHandler.Set();
                 }
             }
